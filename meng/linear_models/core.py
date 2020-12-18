@@ -3,7 +3,8 @@ from tqdm import tqdm
 from warnings import warn
 
 
-def linear_model(y, X, use_sigma, tau, freq, which_i, k_pcr, qr):
+def linear_model(y, X, use_sigma, tau, freq, which_i, k_pcr, qr,
+                 valid_timesteps):
     """
     Solve the least squares problem :math:`y = X \theta + e`.
 
@@ -26,6 +27,8 @@ def linear_model(y, X, use_sigma, tau, freq, which_i, k_pcr, qr):
         kept.
     qr : bool
         Set to True to solve the LS problem through QR-decomposition.
+    valid_timesteps : (T,) array_like
+        A boolean mask that indicates which measurements are valid.
 
     Returns
     -------
@@ -54,10 +57,18 @@ def linear_model(y, X, use_sigma, tau, freq, which_i, k_pcr, qr):
 
     for t_idx, t in enumerate(tqdm(ts)):
 
+        # Select the last `tau` timesteps before time t that are valid.
+        mask = np.argwhere(valid_timesteps[:t])[max(0, -tau):, 0]
+        mask = mask[max(0, mask.size - tau):]
+
         # Select time window.
-        y_window = y[which_i, t-tau: t].T  # (tau, x_num)
-        X_window = X[:, t-tau: t].T        # (tau, N)
+        # The -1 comes from the fact that `which_i` variable elements start at 1.
+        y_window = y[which_i-1][:, mask].T  # (tau, x_num)
+        X_window = X[:, mask].T        # (tau, N)
         m = X_window.shape[0]
+
+        # Select power injection nodes that have non-zero injections.
+        mask = np.where(np.mean(np.abs(X_window), axis=0) > 1e-2)
 
         # Construct correlation matrix.
         if use_sigma:
@@ -72,7 +83,7 @@ def linear_model(y, X, use_sigma, tau, freq, which_i, k_pcr, qr):
 
         # Solve the least squares problem.
         beta, cond_num = [], []
-        for j in range(M):
+        for j in range(len(which_i)):
             if not qr:
                 b, cn = _solve_ls(X_window, y_window[:, j], sigma)  # (2N,)
             else:
@@ -105,8 +116,7 @@ def _solve_ls(X, y, sigma):
     if np.linalg.matrix_rank(beta) != beta.shape[1]:
         print('Singular matrix')
     cond_num = np.linalg.cond(beta)
-    beta = np.linalg.inv(beta).dot(X.T).dot(sigma_inv)
-    beta = beta.dot(y)  # (2N, M)
+    beta = np.linalg.inv(beta).dot(X.T).dot(sigma_inv).dot(y)  # (2N, M)
 
     return beta, cond_num
 

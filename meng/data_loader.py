@@ -17,7 +17,7 @@ load_voltage_exp_data(dataset, sensor_class)
 """
 import numpy as np
 
-from core import my_io, constants, noise
+from meng import my_io, constants, noise
 
 
 def load_full_loadflow(dataset):
@@ -118,13 +118,13 @@ def simulate_noisy_meas(sensor_class, V_org, I_org, current_idx):
     Q_meas : (N+1, T) array_like
         The noisy nodal reactive power injection measurements.
     std_abs : float
-        The std of the noise w.r.t. the absolute value of V and I.
+        The std of the noise w.r.t. the absolute value of X and I.
     std_ang : float
-        The std of the noise w.r.t. the angle of V and I.
+        The std of the noise w.r.t. the angle of X and I.
     std_V_real : float
-        The std of the noise w.r.t. the real part of V.
+        The std of the noise w.r.t. the real part of X.
     std_V_imag : float
-        The std of the noise w.r.t. the imaginary part of V.
+        The std of the noise w.r.t. the imaginary part of X.
     std_I_real : float
         The std of the noise w.r.t. the real part of I.
     std_I_imag : float
@@ -193,7 +193,7 @@ def load_coefficients(dataset):
 
 def load_voltage_exp_data(dataset, sensor_class):
     """
-    Load all data associated with a V sensitivity coefficient estimation problem.
+    Load all data associated with a X sensitivity coefficient estimation problem.
 
     Parameters
     ----------
@@ -219,11 +219,11 @@ def load_voltage_exp_data(dataset, sensor_class):
     coefficients : dict of {str : (N, N, T) array_like}
         The sensitivity coefficients.
     std_abs : float
-        The std of the white Gaussian noise added to |V|.
+        The std of the white Gaussian noise added to |X|.
     std_V_real : float
-        The std of the white Gaussian noise added to Re{V}.
+        The std of the white Gaussian noise added to Re{X}.
     std_V_imag : float
-        The std of the white Gaussian noise added to Im{V}.
+        The std of the white Gaussian noise added to Im{X}.
     """
 
     # Load measurements.
